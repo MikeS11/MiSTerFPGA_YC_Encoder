@@ -15,11 +15,11 @@ Cores are initially setup with a phase accumulator value that references the sta
 
 The calculation is simply: 
 
-(NTSC/PAL Ref Freqency * 2 ^ 40) / Core CLK_VIDEO 
-	Example Genesis
-	NTSC = 3.579545    
-	W = 40 ( 32 bit fraction, 8 bit look up reference)    
-	Genesis Core Video Clock = 107.38635    
+(NTSC/PAL Ref Freqency * 2 ^ 40) / Core CLK_VIDEO    
+	Example Genesis   
+	NTSC = 3.579545       
+	W = 40 ( 32 bit fraction, 8 bit look up reference)      
+	Genesis Core Video Clock = 107.38635      
 	
 	Phase_Inc = 3.579545 * 2 ^ 40 / 107.38635 = 36650387593    
 ------------
