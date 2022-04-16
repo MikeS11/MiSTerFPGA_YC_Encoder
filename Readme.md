@@ -28,3 +28,4 @@ The following link: [Tuned Core Variables](https://docs.google.com/spreadsheets/
 #### Tuning
 The TestPatterns_YC Core includes 3 additional variables used during the tuning process, the first variable increase the phase accumulator by 1-31, the second mutiplies that value by 2^1-31 and the last variable subtracts that if you wish to decrease the value. 
 
+This normally takes a couple iterations do completely remove any dot crawl in your image the link about to the tuned cores has a reference lookup table that is used to help know how much you should increase or decrease the value by based on how much you added and multipled.
