@@ -5,8 +5,8 @@ For more information, please use the MiSTerFPGA CRT Wiki for more information: [
 
 Note: For new cores, the Template always defaults with Y/C to be disabled and is up to a developer to enable it in the QSF File.
 
-##  Test Builds
-https://github.com/MikeS11/MiSTerFPGA_YC_Encoder/tree/main/YC%20Builds
+##  Test Builds: [Y/C Test Builds](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder/tree/main/YC%20Builds "Y/C Test Builds")
+
 
 ## Core Tuning
 Cores are initially setup with a phase accumulator value that references the standard NTSC / PAL clock frequency and is recommended that it be tuned to eliminate all dot crawl or to better reflect the real console.
