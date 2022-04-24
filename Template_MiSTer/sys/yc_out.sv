@@ -43,9 +43,12 @@ module yc_out
 	output reg	csync_o
 );
 
-wire [7:0] red = din[23:16];
-wire [7:0] green = din[15:8];
-wire [7:0] blue = din[7:0];
+wire [7:0] red_i = din[23:16];
+wire [7:0] green_i = din[15:8];
+wire [7:0] blue_i = din[7:0];
+
+logic [9:0] red_1, blue_1, green_1, red_2, blue_2, green_2,
+logic [9:0] red_3, blue_3, green_3, red_4, blue_4, green_4, red, blue, green;
 
 typedef struct {
 	logic signed [20:0] y;
@@ -111,6 +114,23 @@ always_ff @(posedge clk) begin
 	for (logic [3:0] x = 0; x < (MAX_PHASES - 1'd1); x = x + 1'd1) begin
 		phase[x + 1] <= phase[x];
 	end
+
+	// Color Averaging to help with color accuracy 
+	red_1 <= red_i;
+	blue_1 <= blue_i;
+	green_1 <= green_i;
+	red_2 <= red_1;
+	blue_2 <= blue_1;
+	green_2 <= green_1;
+	red_3 <= red_2;
+	blue_3 <= blue_2;
+	green_3 <= green_2;
+	red_4 <= red_3;
+	blue_4 <= blue_3;
+	green_4 <= green_3;
+	red <= (red_1 + red_2 + red_3 + red_4)>>2;
+	blue <= (blue_1 + blue_2 + blue_3 + blue_4)>>2;
+	green <= (green_1 + green_2 + green_2 + green_4)>>2;
 
 	// Calculate Luma signal
 	phase[0].y <= {red, 8'd0} + {red, 5'd0}+ {red, 4'd0} + {red, 1'd0};
