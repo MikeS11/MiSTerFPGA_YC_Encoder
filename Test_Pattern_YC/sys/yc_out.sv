@@ -48,9 +48,12 @@ module yc_out
 wire [4:0] chradd = CHRADD;
 wire [4:0] chrmul = CHRMUL;
 
-wire [7:0] red = din[23:16];
-wire [7:0] green = din[15:8];
-wire [7:0] blue = din[7:0];
+wire [7:0] red_i = din[23:16];
+wire [7:0] green_i = din[15:8];
+wire [7:0] blue_i = din[7:0];
+
+logic [9:0] red_1, blue_1, green_1, red_2, blue_2, green_2,
+logic [9:0] red_3, blue_3, green_3, red_4, blue_4, green_4, red, blue, green;
 
 typedef struct {
 	logic signed [20:0] y;
@@ -68,7 +71,7 @@ phase_t phase[MAX_PHASES];
 reg unsigned [7:0] Y, C, c, U, V;
 
 
-reg [8:0]  cburst_phase;    // colorburst counter 
+reg [10:0]  cburst_phase, cburst_length;    // colorburst counter 
 reg unsigned [7:0] vref = 'd128; // Voltage reference point (Used for Chroma)
 reg [7:0]  chroma_LUT_COS = 8'd0; // Chroma cos LUT reference
 reg [7:0]  chroma_LUT_SIN = 8'd0; // Chroma sin LUT reference 
@@ -117,6 +120,23 @@ always_ff @(posedge clk) begin
 		phase[x + 1] <= phase[x];
 	end
 
+	// Color Averaging to help with color accuracy 
+	red_1 <= red_i;
+	blue_1 <= blue_i;
+	green_1 <= green_i;
+	red_2 <= red_1;
+	blue_2 <= blue_1;
+	green_2 <= green_1;
+	red_3 <= red_2;
+	blue_3 <= blue_2;
+	green_3 <= green_2;
+	red_4 <= red_3;
+	blue_4 <= blue_3;
+	green_4 <= green_3;
+	red <= (red_1 + red_2 + red_3 + red_4)>>2;
+	blue <= (blue_1 + blue_2 + blue_3 + blue_4)>>2;
+	green <= (green_1 + green_2 + green_2 + green_4)>>2;
+
 	// Calculate Luma signal
 	phase[0].y <= {red, 8'd0} + {red, 5'd0}+ {red, 4'd0} + {red, 1'd0};
 	phase[1].y <= {green, 9'd0} + {green, 6'd0} + {green, 4'd0} + {green, 3'd0} + green;
@@ -155,6 +175,14 @@ always_ff @(posedge clk) begin
 	phase[2].c <= phase[1].c;
 	phase[3].c <= phase[2].c;
 
+	// Set Colorburst Length Based on Phase_Accum 
+	if (PHASE_INC > PAL_EN ? 40'd120000000000 : 40'd100000000000) begin
+		cburst_length <= 10'd140;
+	end else if (PHASE_INC < PAL_EN ? 40'd740000000000 : 40'd590000000000) begin
+		cburst_length <= 10'd300;
+	end else	
+		cburst_length <= 10'd180;
+
 	if (hsync) begin // Reset colorburst counter, as well as the calculated cos / sin values.
 		cburst_phase <= 'd0; 	
 		phase[2].u <= 21'b0;	
@@ -166,7 +194,7 @@ always_ff @(posedge clk) begin
 			PAL_line_count <= ~PAL_line_count;
 		end
 	end	else begin // Generate Colorburst for 9 cycles 
-		if (cburst_phase >= 'd40 && cburst_phase <= 'd240) begin // Start the color burst signal at 40 samples or 0.9 us
+		if (cburst_phase >= 'd40 && cburst_phase <= cburst_length) begin // Start the color burst signal at 40 samples or 0.9 us
 			// COLORBURST SIGNAL GENERATION (9 CYCLES ONLY or between count 40 - 240)
 			phase[2].u <= $signed({chroma_SIN_LUT[chroma_LUT_BURST],5'd0});
 			phase[2].v <= 21'b0;
@@ -174,7 +202,7 @@ always_ff @(posedge clk) begin
 			// Division to scale down the results to fit 8 bit. 
 			phase[3].u <= $signed(phase[2].u[20:8]) + $signed(phase[2].u[20:9]);
 			phase[3].v <= phase[2].v;
-		end	else if (cburst_phase > 'd240) begin  // MODULATE U, V for chroma 
+		end	else if (cburst_phase > cburst_length) begin  // MODULATE U, V for chroma 
 			/* 
 			U,V are both multiplied by 1024 earlier to scale for the decimals in the YUV colorspace conversion. 
 			U and V are both divided by 2^12 to divide by 10 for the scaling above as well as chroma subsampling from 4:4:4 to 4:1:1 (25% or from 8 bit to 6 bit)
