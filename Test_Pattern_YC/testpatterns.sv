@@ -30,10 +30,10 @@ module emu
 
 	//Base video clock. Usually equals to CLK_SYS.
 	output           CLK_VIDEO,
-	output 	[39:0]	 CHROMA_PHASE_INC,
 
 	// Temporary Flag for S-Video until Mister INI is updated.
 `ifdef MISTER_ENABLE_YC	
+	output 	[39:0]	 CHROMA_PHASE_INC,
 	output 			PALFLAG,
 	output 			MULFLAG,
 	output 	[4:0]	CHROMAADD,

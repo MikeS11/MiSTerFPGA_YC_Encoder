@@ -52,7 +52,7 @@ wire [7:0] red_i = din[23:16];
 wire [7:0] green_i = din[15:8];
 wire [7:0] blue_i = din[7:0];
 
-logic [9:0] red_1, blue_1, green_1, red_2, blue_2, green_2,
+logic [9:0] red_1, blue_1, green_1, red_2, blue_2, green_2;
 logic [9:0] red_3, blue_3, green_3, red_4, blue_4, green_4, red, blue, green;
 
 typedef struct {
@@ -146,9 +146,9 @@ always_ff @(posedge clk) begin
 
 	// Generate the LUT values using the phase accumulator reference.
 	if (~MULFLAG)
-		phase_accum <= phase_accum + PHASE_INC + (chradd<<<chrmul);
+		phase_accum <= phase_accum + PHASE_INC + (chradd<<chrmul);
 	else
-		phase_accum <= phase_accum + PHASE_INC - (chradd<<<chrmul);
+		phase_accum <= phase_accum + PHASE_INC - (chradd<<chrmul);
 	chroma_LUT <= phase_accum[39:32];
 		
 	// Adjust SINE carrier reference for PAL (Also adjust for PAL Switch)
