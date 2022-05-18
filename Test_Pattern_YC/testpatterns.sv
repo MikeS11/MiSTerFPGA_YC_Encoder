@@ -255,7 +255,7 @@ localparam CONF_STR = {
 
 wire forced_scandoubler;
 wire  [1:0] buttons;
-wire [31:0] status;
+wire [63:0] status;
 wire [10:0] ps2_key;
 
 hps_io #(.CONF_STR(CONF_STR)) hps_io
@@ -340,7 +340,7 @@ assign CE_PIXEL = ce_pix;
 
 // SET PAL and NTSC TIMING
 `ifdef MISTER_ENABLE_YC
-assign CHROMA_PHASE_INC = status[2] ? 40'd45812728235 : 40'd45812728235;
+assign CHROMA_PHASE_INC = status[2] ? 40'd45812728235 : 40'd45812728099;
 assign YC_EN = status[22];
 assign PALFLAG = status[2];
 assign MULFLAG = status[13];
