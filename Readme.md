@@ -3,6 +3,8 @@
 ## Y/C Reference Documentation
 For more information, please use the MiSTerFPGA CRT Wiki for more information: [CRT Wiki (YC Cores)](https://mister-devel.github.io/MkDocs_MiSTer/advanced/crt/#unofficial-custom-yc-s-video-composite-cores-by-mikes11 "CRT Wiki (YC Cores)")
 
+A bit on how the module works and history can be found [Here](https://docs.google.com/document/d/1FrfUKQedBdkgifHC88ouqLF9IDCNamC8TyLIcY3rou0/edit?usp=sharing"Here")
+
 Note: For new cores, the Template always defaults with Y/C to be disabled and is up to a developer to enable it in the QSF File.
 
 ##  Test Builds: [Y/C Test Builds](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder/tree/main/YC%20Builds "Y/C Test Builds")
