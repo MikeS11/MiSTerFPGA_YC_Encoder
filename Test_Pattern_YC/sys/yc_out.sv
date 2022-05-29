@@ -148,7 +148,7 @@ always_ff @(posedge clk) begin
 		else
 			chroma_LUT_BURST <= chroma_LUT + 8'd96;
 	end else  // Adjust SINE carrier reference for NTSC
-		chroma_LUT_BURST <= chroma_LUT + 8'd132;
+		chroma_LUT_BURST <= chroma_LUT + 8'd128;
 		
 	// Prepare LUT values for sin / cos (+90 degress)
 	chroma_LUT_SIN <= chroma_LUT;
