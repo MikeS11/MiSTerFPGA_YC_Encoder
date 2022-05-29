@@ -5,6 +5,8 @@ For more information, please use the MiSTerFPGA CRT Wiki for more information: [
 
 A bit on how the module works and history can be found [Here](https://docs.google.com/document/d/1FrfUKQedBdkgifHC88ouqLF9IDCNamC8TyLIcY3rou0/edit?usp=sharing"Here")
 
+**Arcade Cores** - Its recommended you created a new folder _YCArcade and _YCArcade/cores in order to not mix up the update script with the YC cores. Copy the mra files into the root of the directory and the YC cores into the cores directory.
+
 Note: For new cores, the Template always defaults with Y/C to be disabled and is up to a developer to enable it in the QSF File.
 
 ##  Test Builds: [Y/C Test Builds](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder/tree/main/YC%20Builds "Y/C Test Builds")
