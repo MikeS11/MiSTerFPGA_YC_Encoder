@@ -229,9 +229,8 @@ localparam CONF_STR = {
 	//"O5,PAL_SWITCH,On,Off;",
 	"O8C,Chroma Add timing,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31;",
     "OEI,Chroma Multiply,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31;",
-	"OM,Video Signal,RGBS/YPbPr,Y/C;",
 	"OD,Reverse,No,Yes;",
-
+	"OM,Video Signal,RGBS/YPbPr,Y/C;",
 //	"P1,Test Page 1;",
 //	"P1-;",
 //	"P1-, -= Options in page 1 =-;",
