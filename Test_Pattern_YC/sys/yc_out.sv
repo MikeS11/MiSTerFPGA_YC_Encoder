@@ -169,8 +169,8 @@ always_ff @(posedge clk) begin
 	// Since the colorburst length depends on the video clock freqency, this just sets the approprate count length to match the colorburst lengths closer to 9/10 cycles for NTSC/PAL.
 
 	if (PHASE_INC[39:32] > (PAL_EN ? 8'd56 : 8'd45)) begin
-		cburst_length <= PAL_EN ? 10'd105 : 10'd110;
-		cburst_start <= 10'd60;
+		cburst_length <= PAL_EN ? 10'd85 : 10'd90;
+		cburst_start <= 10'd40;
 	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd37 : 8'd30)) begin
 		cburst_length <= PAL_EN ? 10'd128 : 10'd135;
 		cburst_start <= 10'd60;
@@ -221,9 +221,9 @@ always_ff @(posedge clk) begin
 				
 			// Division to scale down the results to fit 8 bit. 
 			if (PAL_EN)
-				phase[3].u <= $signed(phase[2].u[20:8]) + $signed(phase[2].u[20:10]) + $signed(phase[2].u[20:11]);
+				phase[3].u <= $signed(phase[2].u[20:8]) + $signed(phase[2].u[20:10]) + $signed(phase[2].u[20:14]);
 			else
-				phase[3].u <= $signed(phase[2].u[20:8]) + $signed(phase[2].u[20:10]) + $signed(phase[2].u[20:12]);
+				phase[3].u <= $signed(phase[2].u[20:8]) + $signed(phase[2].u[20:11]) + $signed(phase[2].u[20:12]) + $signed(phase[2].u[20:13]);
 
 			phase[3].v <= phase[2].v;
 		end	else if (cburst_phase > cburst_length) begin  // MODULATE U, V for chroma 
