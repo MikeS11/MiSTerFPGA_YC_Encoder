@@ -1354,6 +1354,7 @@ csync csync_vga(clk_vid, vga_hs_osd, vga_vs_osd, vga_cs_osd);
 		.clk(clk_vid),
 		.PAL_EN(pal_en),
 		.PHASE_INC(PhaseInc),
+		.COLORBURST_RANGE(COLORBURST_RANGE),
 		.MULFLAG(mulflag),
 		.CHRADD(chromaadd),
 		.CHRMUL(chromamul),	
@@ -1583,6 +1584,7 @@ always @(posedge clk_sys) sl_r <= FB_EN ? 2'b00 : scanlines;
 `ifdef MISTER_ENABLE_YC
 	wire pal_en;
 	wire yc_en;
+	wire [26:0] COLORBURST_RANGE;
 	wire [4:0] chromaadd;
 	wire [4:0] chromamul;
 	wire mulflag;
@@ -1613,6 +1615,7 @@ emu emu
 	.CHROMAADD(chromaadd),
 	.CHROMAMUL(chromamul),
 	.MULFLAG(mulflag),
+	.COLORBURST_RANGE(COLORBURST_RANGE),
 	.PALFLAG(pal_en),
 	.YC_EN(yc_en),
 	.CHROMA_PHASE_INC(PhaseInc),

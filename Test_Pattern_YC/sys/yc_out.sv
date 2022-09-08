@@ -30,6 +30,9 @@ module yc_out
 	input   clk,		
 	input 	[39:0] PHASE_INC,
 	input	PAL_EN,
+	input   [26:0] COLORBURST_RANGE,
+	
+	// Phase Accumunulator tuning variables used only during core development
 	input	[4:0] CHRADD,
 	input	[4:0] CHRMUL,
 	input 	MULFLAG,
@@ -47,6 +50,7 @@ module yc_out
 );
 wire [4:0] chradd = CHRADD;
 wire [4:0] chrmul = CHRMUL;
+
 
 wire [7:0] red = din[23:16];
 wire [7:0] green = din[15:8];
@@ -165,44 +169,6 @@ always_ff @(posedge clk) begin
 	phase[2].c <= phase[1].c;
 	phase[3].c <= phase[2].c;
 
-	// Set Colorburst Length Based on Phase_Accum 
-	// Since the colorburst length depends on the video clock freqency, this just sets the approprate count length to match the colorburst lengths closer to 9/10 cycles for NTSC/PAL.
-
-	if (PHASE_INC[39:32] > (PAL_EN ? 8'd56 : 8'd45)) begin
-		cburst_length <= PAL_EN ? 10'd85 : 10'd90;
-		cburst_start <= 10'd40;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd37 : 8'd30)) begin
-		cburst_length <= PAL_EN ? 10'd128 : 10'd135;
-		cburst_start <= 10'd60;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd28 : 8'd22)) begin
-		cburst_length <= PAL_EN ? 10'd150 : 10'd161;
-		cburst_start <= 10'd60;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd18 : 8'd15)) begin
-		cburst_length <= PAL_EN ? 10'd173 : 10'd186;
-		cburst_start <= 10'd60;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd16 : 8'd13)) begin
-		cburst_length <= PAL_EN ? 10'd195 : 10'd211;
-		cburst_start <= 10'd60;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd14 : 8'd11)) begin
-		cburst_length <= PAL_EN ? 10'd218 : 10'd236;
-		cburst_start <= 10'd60;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd12 : 8'd10)) begin
-		cburst_length <= PAL_EN ? 10'd241 : 10'd261;
-		cburst_start <= 10'd60;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd11 : 8'd9)) begin
-		cburst_length <= PAL_EN ? 10'd323 : 10'd346;
-		cburst_start <= 10'd120;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd10 : 8'd8)) begin
-		cburst_length <= PAL_EN ? 10'd346 : 10'd371;
-		cburst_start <= 10'd120;
-	end else if (PHASE_INC[39:32] > (PAL_EN ? 8'd9 : 8'd7)) begin
-		cburst_length <= PAL_EN ? 10'd368 : 10'd397;
-		cburst_start <= 10'd120;
-	end else begin
-		cburst_length <= PAL_EN ? 10'd391 : 10'd422;
-		cburst_start <= 10'd120;
-	end
-
 	if (hsync) begin // Reset colorburst counter, as well as the calculated cos / sin values.
 		cburst_phase <= 'd0; 	
 		phase[2].u <= 21'b0;	
@@ -214,7 +180,7 @@ always_ff @(posedge clk) begin
 			PAL_line_count <= ~PAL_line_count;
 		end
 	end	else begin // Generate Colorburst for 9 cycles 
-		if (cburst_phase >= cburst_start && cburst_phase <= cburst_length) begin // Start the color burst signal at 40 samples or 0.9 us
+		if (cburst_phase >= COLORBURST_RANGE[26:20] && cburst_phase <= (PAL_EN ? COLORBURST_RANGE[9:0] : COLORBURST_RANGE[19:10])) begin // Start the color burst signal at 40 samples or 0.9 us
 			// COLORBURST SIGNAL GENERATION (9 CYCLES ONLY or between count 40 - 240)
 			phase[2].u <= $signed({chroma_SIN_LUT[chroma_LUT_BURST],5'd0});
 			phase[2].v <= 21'b0;
@@ -240,7 +206,7 @@ always_ff @(posedge clk) begin
 		end
 
 		// Stop the colorburst timer as its only needed for the initial pulse
-		if (cburst_phase <= 'd400) 
+		if (cburst_phase <= (PAL_EN ? COLORBURST_RANGE[9:0] : COLORBURST_RANGE[19:10])) 
 			cburst_phase <= cburst_phase + 9'd1;
 
 			// Calculate for chroma (Note: "PAL SWITCH" routine flips V * COS(Wt) every other line)

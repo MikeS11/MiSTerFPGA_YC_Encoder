@@ -33,7 +33,8 @@ module emu
 
 	// Temporary Flag for S-Video until Mister INI is updated.
 `ifdef MISTER_ENABLE_YC	
-	output 	[39:0]	 CHROMA_PHASE_INC,
+	output 	[39:0]	CHROMA_PHASE_INC,
+    output  [26:0]  COLORBURST_RANGE,
 	output 			PALFLAG,
 	output 			MULFLAG,
 	output 	[4:0]	CHROMAADD,
@@ -335,11 +336,18 @@ assign CE_PIXEL = ce_pix;
 	Ref CLK = 85.90908 (This could us any clock) 
 	
 	NTSC_Inc = 3.579545 * 2 ^ 32 / 85.90908 = 178956971
+
+	COLORBURST_RANGE is the concatenation of the start / end of the colorburst signal in 
+	clock cycles where the first 7 bits is the start, the next 10 is the NTSC End followed by PAL E.g. {START,NTSC,PAL}
+	The Colorburst Starts at (CLK_VIDEO/NTSC_REF) * 3.7 .. This is not specific to any standard, it was just a safe distance
+	The NTSC length = START + (CLK_VIDEO/NTSC_REF) * 9 Cycles
+	The PAL length = START + (CLK_VIDEO/PAL_REF) * 10 Cycles
 */
 
 // SET PAL and NTSC TIMING
 `ifdef MISTER_ENABLE_YC
 assign CHROMA_PHASE_INC = status[2] ? 40'd45812728235 : 40'd45812728099;
+assign COLORBURST_RANGE = {7'd35 ,10'd116 ,10'd0}; 
 assign YC_EN = status[22];
 assign PALFLAG = status[2];
 assign MULFLAG = status[13];
