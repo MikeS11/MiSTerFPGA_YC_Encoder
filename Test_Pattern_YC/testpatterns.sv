@@ -343,16 +343,26 @@ assign CE_PIXEL = ce_pix;
 	The NTSC length = START + (CLK_VIDEO/NTSC_REF) * 9 Cycles
 	The PAL length = START + (CLK_VIDEO/PAL_REF) * 10 Cycles
 */
-
-// SET PAL and NTSC TIMING
 `ifdef MISTER_ENABLE_YC
-assign CHROMA_PHASE_INC = status[2] ? 40'd45812728235 : 40'd45812728099;
-assign COLORBURST_RANGE = {7'd35 ,10'd116 ,10'd0}; 
-assign YC_EN = status[22];
-assign PALFLAG = status[2];
-assign MULFLAG = status[13];
-assign CHROMAADD = status[12:8];
-assign CHROMAMUL = status[18:14];
+	parameter NTSC_REF = 3.579545;   
+	parameter PAL_REF = 4.43361875;
+	localparam [6:0] COLORBURST_START = (3.7 * (CLK_VIDEO_NTSC/NTSC_REF));
+	localparam [9:0] COLORBURST_NTSC_END = (9 * (CLK_VIDEO_NTSC/NTSC_REF)) + COLORBURST_START;
+	localparam [9:0] COLORBURST_PAL_END = (10 * (CLK_VIDEO_PAL/PAL_REF)) + COLORBURST_START;
+ 
+	// Modified Variables
+    parameter CLK_VIDEO_NTSC = 48; // Must be filled E.g XX.XXX Hz 
+	parameter CLK_VIDEO_PAL = 48; // Must be filled E.g XX.XXX Hz 
+	localparam [39:0] NTSC_PHASE_INC = 40'd45812728099; // ((NTSC_REF**2^40) / CLK_VIDEO_NTSC);
+	localparam [39:0] PAL_PHASE_INC = 40'd45812728235; // ((PAL_REF*2^40) / CLK_VIDEO_PAL) ;
+
+	assign CHROMA_PHASE_INC = PALFLAG ? PAL_PHASE_INC : NTSC_PHASE_INC; 
+	assign YC_EN = status[22];  // Change the status to match your configuration
+	assign PALFLAG = status[2];  // if applicable, Change the status to match your configuration. 
+	assign MULFLAG = status[13];
+	assign CHROMAADD = status[12:8];
+	assign CHROMAMUL = status[18:14];
+ 	assign COLORBURST_RANGE = {COLORBURST_START, COLORBURST_NTSC_END, COLORBURST_PAL_END};
 `endif
 
 assign VGA_DE = ~(HBlank | VBlank);
