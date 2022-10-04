@@ -31,12 +31,6 @@ module emu
 	//Base video clock. Usually equals to CLK_SYS.
 	output        CLK_VIDEO,
 
-	//Enable YC Output from the core
-`ifdef MISTER_ENABLE_YC
-	output [39:0] CHROMA_PHASE_INC,
-	output        YC_EN,
-	output        PALFLAG,
-`endif
 	//Multiple resolutions are supported using different CE_PIXEL rates.
 	//Must be based on CLK_VIDEO
 	output        CE_PIXEL,
@@ -55,13 +49,22 @@ module emu
 	output        VGA_F1,
 	output [1:0]  VGA_SL,
 	output        VGA_SCALER, // Force VGA scaler
+	output        VGA_DISABLE, // analog out is off
+
+	//Enable YC Output from the core
+`ifdef MISTER_ENABLE_YC
+	output [39:0] CHROMA_PHASE_INC,
+    output [26:0] COLORBURST_RANGE,
+	output        YC_EN,
+	output        PALFLAG,
+`endif
 
 	input  [11:0] HDMI_WIDTH,
 	input  [11:0] HDMI_HEIGHT,
 	output        HDMI_FREEZE,
 
 `ifdef MISTER_FB
-	// Use framebuffer in DDRAM (USE_FB=1 in qsf)
+	// Use framebuffer in DDRAM
 	// FB_FORMAT:
 	//    [2:0] : 011=8bpp(palette) 100=16bpp 101=24bpp 110=32bpp
 	//    [3]   : 0=16bits 565 1=16bits 1555
@@ -187,7 +190,8 @@ assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DD
 
 assign VGA_SL = 0;
 assign VGA_F1 = 0;
-assign VGA_SCALER = 0;
+assign VGA_SCALER  = 0;
+assign VGA_DISABLE = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_S = 0;
@@ -201,7 +205,7 @@ assign BUTTONS = 0;
 
 //////////////////////////////////////////////////////////////////
 
-wire [1:0] ar = status[9:8];
+wire [1:0] ar = status[122:121];
 
 assign VIDEO_ARX = (!ar) ? 12'd4 : (ar - 1'd1);
 assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
@@ -210,53 +214,36 @@ assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
 localparam CONF_STR = {
 	"MyCore;;",
 	"-;",
-	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
-	"O2,TV Mode,NTSC,PAL;",
-//  "OM,Video Signal,RGBS/YPbPr,Y/C;",
-	"O34,Noise,White,Red,Green,Blue;",
+	"O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+	"O[2],TV Mode,NTSC,PAL;",
+	"O[4:3],Noise,White,Red,Green,Blue;",
+//  "O[22],Video Signal,RGBS/YPbPr,Y/C;",
 	"-;",
 	"P1,Test Page 1;",
 	"P1-;",
 	"P1-, -= Options in page 1 =-;",
 	"P1-;",
-	"P1O5,Option 1-1,Off,On;",
+	"P1O[5],Option 1-1,Off,On;",
 	"d0P1F1,BIN;",
-	"H0P1O6,Option 1-2,Off,On;",
+	"H0P1O[10],Option 1-2,Off,On;",
 	"-;",
 	"P2,Test Page 2;",
 	"P2-;",
 	"P2-, -= Options in page 2 =-;",
 	"P2-;",
 	"P2S0,DSK;",
-	"P2O67,Option 2,1,2,3,4;",
+	"P2O[7:6],Option 2,1,2,3,4;",
 	"-;",
 	"-;",
-	"T0,Reset;",
-	"R0,Reset and close OSD;",
+	"T[0],Reset;",
+	"R[0],Reset and close OSD;",
 	"V,v",`BUILD_DATE 
 };
 
-/* 	Phase Accumulator Increments (Fractional Size 32, look up size 8 bit, total 40 bits)
-	Increment Calculation - (Output Clock * 2 ^ Word Size) / Reference Clock
-	Example 
-	NTSC = 3.579545 
-	W = 40 ( 32 bit fraction, 8 bit look up reference) 
-	Ref CLK = 42.954544 (This could us any clock) 
-	
-	NTSC_Inc = 3.579545333 * 2 ^ 40 / 42.954544 = 91625968981 
-*/
-
-// SET PAL and NTSC TIMING and pass through status bits. ** YC must be enabled in the qsf file **
-`ifdef MISTER_ENABLE_YC
-	assign CHROMA_PHASE_INC = PALFLAG ? 40'd114532461227 : 40'd91625968981; // (Example SNES timing)
-	assign YC_EN =  status[22];  // Change the status to match your configuration
-	assign PALFLAG = status[2];  // if applicable, Change the status to match your configuration. 
-`endif
-
 wire forced_scandoubler;
-wire  [1:0] buttons;
-wire [31:0] status;
-wire [10:0] ps2_key;
+wire   [1:0] buttons;
+wire [127:0] status;
+wire  [10:0] ps2_key;
 
 hps_io #(.CONF_STR(CONF_STR)) hps_io
 (
@@ -287,6 +274,28 @@ pll pll
 wire reset = RESET | status[0] | buttons[1];
 
 //////////////////////////////////////////////////////////////////
+
+// SET PAL and NTSC TIMING and pass through status bits. ** YC must be enabled in the qsf file **
+`ifdef MISTER_ENABLE_YC
+	parameter NTSC_REF = 3.579545;   
+	parameter PAL_REF = 4.43361875;
+	// Colorburst Lenth Calculation to send to Y/C Module, based on the CLK_VIDEO of the core
+	localparam [6:0] COLORBURST_START = (3.7 * (CLK_VIDEO_NTSC/NTSC_REF));
+	localparam [9:0] COLORBURST_NTSC_END = (9 * (CLK_VIDEO_NTSC/NTSC_REF)) + COLORBURST_START;
+	localparam [9:0] COLORBURST_PAL_END = (10 * (CLK_VIDEO_PAL/PAL_REF)) + COLORBURST_START;
+ 
+	// Parameters to be modifed
+    parameter CLK_VIDEO_NTSC = 42.3; // Must be filled E.g XX.X Hz - CLK_VIDEO
+	parameter CLK_VIDEO_PAL = 42.3; // Must be filled E.g XX.X Hz - CLK_VIDEO
+	localparam [39:0] NTSC_PHASE_INC = 40'd91625968981; // ((NTSC_REF**2^40) / CLK_VIDEO_NTSC) - SNES Example;
+	localparam [39:0] PAL_PHASE_INC = 40'd114532461227; // ((PAL_REF*2^40) / CLK_VIDEO_PAL)- SNES Example;
+
+	// Send Parameters to Y/C Module
+	assign CHROMA_PHASE_INC = PALFLAG ? PAL_PHASE_INC : NTSC_PHASE_INC; 
+	assign YC_EN = status[2];  // Change the status to match your configuration
+	assign PALFLAG = status[2];  // if applicable, Change the status to match your configuration. 
+ 	assign COLORBURST_RANGE = {COLORBURST_START, COLORBURST_NTSC_END, COLORBURST_PAL_END}; // Pass colorburst length
+`endif
 
 wire [1:0] col = status[4:3];
 
